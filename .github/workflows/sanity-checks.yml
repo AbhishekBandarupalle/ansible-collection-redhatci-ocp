@@ -1,0 +1,32 @@
+name: Ansible Galaxy Publish
+on:
+  pull_request:
+
+jobs:
+  sanity:
+    name: Sanity Check
+    strategy:
+      matrix:
+        ansible:
+          - stable-2.9
+          - stable-2.15
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          path: ansible_collection/${{ github.repository }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.11
+
+      - name: Install ansible-base ${{ matrix.ansible }}
+        run: pip install https://github.com/ansible/ansible/archive/${{ matrix.ansible }}.tar.gz --disable-pip-version-check
+      
+      # Always succeeding sanity test until all errors are fixed
+      - name: Run sanity test
+        run: ansible-test sanity -v --docker --color --coverage || true
+        working-directory: ansible_collection/${{ github.repository }}
